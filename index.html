@@ -153,8 +153,14 @@
         document.addEventListener('click', shootWeb);
         document.addEventListener('touchend', shootWeb);
         
-        function shootWeb() {
+        function shootWeb(e) {
             if (!gameRunning) return;
+            
+            // Aim at the pointer: mouse clicks carry clientX/clientY, touch is tracked above
+            if (e && typeof e.clientX === 'number' && e.clientX + e.clientY > 0) {
+                touchX = e.clientX;
+                touchY = e.clientY;
+            }
             
             const angle = Math.atan2(touchY - player.y, touchX - player.x);
             
@@ -274,9 +280,14 @@
                 
                 // Check collision with player
                 if (dx * dx + dy * dy < (player.width + enemy.width) * (player.width + enemy.width) / 4) {
-                    player.health -= 1;
-                    if (player.health <= 0) {
-                        endGame();
+                    // Damage at most once per touch, otherwise 60 hits a second end the game instantly
+                    const now = performance.now();
+                    if (!enemy.lastHit || now - enemy.lastHit > 700) {
+                        enemy.lastHit = now;
+                        player.health -= 1;
+                        if (player.health <= 0) {
+                            endGame();
+                        }
                     }
                 }
             }

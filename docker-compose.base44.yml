@@ -1,0 +1,26 @@
+services:
+  web:
+    image: python:3.12-slim
+    labels:
+      base44.project: "Spider-Man Shooting Game"
+      base44.kind: "web"
+      base44.port: "3000"
+    # Static-site dev server: serves the bind-mounted source and reads each
+    # file per request, so edits are visible on the next reload (no build).
+    # Runs as root because the sandbox checkout is root-owned (0700).
+    command: ["python3", "-m", "http.server", "80", "--bind", "0.0.0.0", "--directory", "/site"]
+    ports:
+      - "3000:80"
+    volumes:
+      - .:/site:ro
+    restart: on-failure
+    healthcheck:
+      test:
+        - "CMD"
+        - "python3"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1/index.html', timeout=2).read(1)"
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
